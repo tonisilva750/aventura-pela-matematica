@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aventura pela Matemática — Game Show</title>
+  <style>
+    :root{
+      --bg1:#061426;
+      --bg2:#0b2a4a;
+      --card:#0f2034cc;
+      --stroke:#2f5a86;
+      --accent:#ffd25a;
+      --accent2:#65d6ff;
+      --good:#7CFF7A;
+      --bad:#FF6B6B;
+      --text:#e9f2ff;
+      --muted:#b8c7dd;
+      --shadow: 0 12px 40px rgba(0,0,0,.45);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      min-height:100vh;
+      background: radial-gradient(1200px 700px at 15% 10%, #103b67 0%, transparent 55%),
+                  radial-gradient(1000px 600px at 85% 5%, #0d5c7f 0%, transparent 55%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+    .glow{
+      position:fixed; inset:-30%;
+      background: conic-gradient(from 210deg, rgba(101,214,255,.0), rgba(101,214,255,.10), rgba(255,210,90,.10), rgba(255,107,107,.08), rgba(101,214,255,.0));
+      filter: blur(70px);
+      animation: spin 16s linear infinite;
+      pointer-events:none;
+      opacity:.8;
+      z-index:-1;
+    }
+    @keyframes spin { to { transform: rotate(360deg);} }
+
+    header{
+      padding:26px 18px 14px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .topbar{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .logo{
+      width:56px; height:56px;
+      border-radius:16px;
+      background: linear-gradient(135deg, rgba(255,210,90,.95), rgba(101,214,255,.95));
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo::before{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 35%, rgba(255,255,255,.75), transparent 55%),
+                  radial-gradient(circle at 70% 65%, rgba(0,0,0,.15), transparent 55%);
+      transform: rotate(15deg);
+    }
+    .brand h1{
+      margin:0;
+      font-size: clamp(20px, 2.3vw, 30px);
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    .brand small{
+      display:block;
+      color:var(--muted);
+      margin-top:4px;
+      font-size: 13px;
+      letter-spacing:.2px;
+    }
+
+    .statusRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .pill{
+      background: rgba(15,32,52,.75);
+      border:1px solid rgba(47,90,134,.55);
+      padding:10px 12px;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width: 190px;
+      justify-content:space-between;
+    }
+    .pill .k{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.2px;
+    }
+    .pill .v{
+      font-family: var(--mono);
+      font-weight:700;
+      font-size: 14px;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 40px;
+      display:grid;
+      grid-template-columns: 1.35fr .85fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr; padding-bottom:34px;}
+      .pill{min-width: 160px;}
+    }
+
+    .card{
+      background: rgba(15,32,52,.72);
+      border:1px solid rgba(47,90,134,.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .cardHeader{
+      padding:16px 18px;
+      border-bottom: 1px solid rgba(47,90,134,.45);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      background: linear-gradient(180deg, rgba(11,28,46,.72), rgba(15,32,52,.35));
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.25px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size:12px;
+      color:#081425;
+      padding:6px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255,210,90,.95), rgba(101,214,255,.95));
+      font-weight:800;
+    }
+    .content{
+      padding: 18px;
+    }
+
+    /* Scene art: Praia do Primeiro Cocal (stylized) */
+    .scene{
+      height: 190px;
+      border-radius: 16px;
+      border:1px solid rgba(47,90,134,.55);
+      overflow:hidden;
+      position:relative;
+      background:
+        radial-gradient(130px 70px at 18% 26%, rgba(255,255,255,.85), rgba(255,255,255,0) 70%),
+        radial-gradient(180px 90px at 55% 18%, rgba(255,255,255,.75), rgba(255,255,255,0) 70%),
+        linear-gradient(180deg, #7fd3ff 0%, #2aa3d8 45%, #0b6a94 100%);
+      box-shadow: 0 12px 34px rgba(0,0,0,.28) inset;
+    }
+    .scene::before{
+      content:"";
+      position:absolute; left:-20%; right:-20%; bottom:-10px; height:110px;
+      background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.15)),
+                  radial-gradient(40px 18px at 20% 40%, rgba(255,255,255,.5), rgba(255,255,255,0) 70%),
+                  radial-gradient(60px 22px at 60% 55%, rgba(255,255,255,.35), rgba(255,255,255,0) 70%),
+                  linear-gradient(180deg, #0b6a94 0%, #08707f 25%, #0a8e7c 60%, #0a6b54 100%);
+      clip-path: polygon(0 55%, 12% 45%, 25% 52%, 38% 42%, 52% 55%, 66% 46%, 80% 58%, 92% 50%, 100% 62%, 100% 100%, 0 100%);
+      opacity:.95;
+    }
+    .scene::after{
+      content:"";
+      position:absolute; left:0; right:0; bottom:0; height:74px;
+      background: linear-gradient(180deg, rgba(255,223,161,.0), rgba(255,223,161,.55), rgba(255,223,161,.85));
+      clip-path: polygon(0 45%, 12% 52%, 22% 40%, 34% 55%, 45% 42%, 58% 58%, 70% 44%, 82% 60%, 92% 48%, 100% 58%, 100% 100%, 0 100%);
+      opacity:.95;
+      filter: saturate(1.05);
+    }
+    .palm{
+      position:absolute;
+      bottom:26px;
+      width: 14px;
+      height: 120px;
+      background: linear-gradient(180deg, #5b3a23, #3a2417);
+      border-radius: 999px;
+      transform-origin: bottom center;
+      box-shadow: 0 10px 20px rgba(0,0,0,.18);
+    }
+    .palm .leaf{
+      position:absolute;
+      top:4px; left:50%;
+      width: 95px; height: 18px;
+      background: linear-gradient(90deg, #0a7e5a, #19c38b);
+      border-radius: 999px;
+      transform-origin: left center;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.22));
+      opacity:.95;
+    }
+    .palm .leaf:nth-child(1){ transform: translateX(-2px) rotate(-18deg); }
+    .palm .leaf:nth-child(2){ transform: translateX(-2px) rotate(6deg) scaleX(.95); opacity:.92;}
+    .palm .leaf:nth-child(3){ transform: translateX(-2px) rotate(28deg) scaleX(.92); opacity:.9;}
+    .palm:nth-of-type(1){ left: 14%; transform: skewX(-6deg) rotate(-2deg); height: 126px;}
+    .palm:nth-of-type(2){ left: 24%; transform: skewX(-8deg) rotate(-6deg); height: 108px; opacity:.92;}
+    .palm:nth-of-type(3){ right: 14%; transform: skewX(7deg) rotate(4deg); height: 120px;}
+    .sun{
+      position:absolute;
+      top:18px; right:18px;
+      width:74px; height:74px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 45%),
+                  radial-gradient(circle at 55% 60%, rgba(255,255,255,.2), rgba(255,255,255,0) 55%),
+                  radial-gradient(circle at 30% 30%, rgba(255,210,90,1), rgba(255,158,60,1));
+      box-shadow: 0 0 60px rgba(255,210,90,.35);
+      opacity:.95;
+    }
+    .titleStrip{
+      position:absolute;
+      left: 18px; bottom: 12px;
+      background: rgba(8,20,38,.58);
+      border:1px solid rgba(47,90,134,.5);
+      padding:8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: rgba(233,242,255,.92);
+      letter-spacing:.25px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Question */
+    .question{
+      font-size: 18px;
+      line-height: 1.35;
+      margin: 0 0 14px;
+    }
+    .context{
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+      margin: 0 0 14px;
+    }
+    .options{
+      display:grid;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .optBtn{
+      width:100%;
+      text-align:left;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(47,90,134,.55);
+      background: rgba(6,20,38,.55);
+      color: var(--text);
+      cursor:pointer;
+      transition: transform .08s ease, border-color .15s ease, background .15s ease;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .optBtn:hover{ transform: translateY(-1px); border-color: rgba(101,214,255,.7); background: rgba(6,20,38,.68);}
+    .optBtn:disabled{ opacity:.55; cursor:not-allowed; transform:none;}
+    .optKey{
+      width: 26px; height: 26px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      font-family: var(--mono);
+      font-weight: 800;
+      background: rgba(101,214,255,.15);
+      border: 1px solid rgba(101,214,255,.35);
+      flex: 0 0 auto;
+      margin-top:1px;
+    }
+    .optText{ flex: 1 1 auto; }
+    .feedback{
+      margin-top: 14px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(47,90,134,.55);
+      background: rgba(6,20,38,.45);
+      display:none;
+      line-height: 1.35;
+    }
+    .feedback.show{ display:block; }
+    .feedback.good{ border-color: rgba(124,255,122,.55); }
+    .feedback.bad{ border-color: rgba(255,107,107,.55); }
+
+    .controls{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .btn{
+      border:none;
+      cursor:pointer;
+      padding: 11px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      color:#081425;
+      background: linear-gradient(135deg, rgba(255,210,90,.98), rgba(101,214,255,.98));
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      transition: transform .08s ease, filter .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter:saturate(1.1); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none;}
+    .btn.secondary{
+      color: var(--text);
+      background: rgba(6,20,38,.55);
+      border:1px solid rgba(47,90,134,.55);
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    }
+    .btn.danger{
+      color: var(--text);
+      background: rgba(255,107,107,.20);
+      border:1px solid rgba(255,107,107,.55);
+    }
+
+    /* Lifelines & Bonus */
+    .tools{
+      display:grid;
+      gap:10px;
+    }
+    .toolRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .toolCard{
+      flex:1 1 170px;
+      min-width: 170px;
+      background: rgba(6,20,38,.50);
+      border:1px solid rgba(47,90,134,.55);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .toolCard h3{
+      margin:0;
+      font-size: 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .toolCard p{
+      margin:0;
+      color:var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .count{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(101,214,255,.12);
+      border: 1px solid rgba(101,214,255,.35);
+      color: rgba(233,242,255,.95);
+    }
+    .mini{
+      font-size: 12px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-weight: 800;
+    }
+
+    /* Leaderboard */
+    .lb{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .lbTop{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .input{
+      flex: 1 1 220px;
+      min-width: 220px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(47,90,134,.55);
+      background: rgba(6,20,38,.55);
+      color: var(--text);
+      outline:none;
+    }
+    .input::placeholder{ color: rgba(184,199,221,.7); }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(47,90,134,.55);
+      background: rgba(6,20,38,.35);
+    }
+    th, td{
+      padding: 10px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(47,90,134,.35);
+    }
+    th{
+      text-align:left;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing:.2px;
+      background: rgba(15,32,52,.45);
+    }
+    tr:last-child td{ border-bottom:none; }
+    .rank{
+      width: 56px;
+      font-family: var(--mono);
+      color: rgba(233,242,255,.9);
+    }
+    .score{
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+    .goodTxt{ color: var(--good); }
+    .badTxt{ color: var(--bad); }
+    .hintBox{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px dashed rgba(101,214,255,.55);
+      background: rgba(101,214,255,.10);
+      display:none;
+      color: rgba(233,242,255,.95);
+      line-height:1.35;
+      font-size: 13px;
+    }
+    .hintBox.show{ display:block; }
+    .tiny{
+      font-size: 12px;
+      color: rgba(184,199,221,.9);
+      line-height:1.35;
+    }
+    .footerNote{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(184,199,221,.85);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Aventura pela Matemática</h1>
+          <small>Game Show — Porcentagem (9º ano) contextualizada em São Pedro da Água Branca (MA)</small>
+        </div>
+      </div>
+
+      <div class="statusRow" aria-label="Status do jogo">
+        <div class="pill">
+          <div>
+            <div class="k">Rodada</div>
+            <div class="v" id="roundLabel">—</div>
+          </div>
+          <div>
+            <div class="k">Questão</div>
+            <div class="v"><span id="qIndex">0</span>/<span id="qTotal">0</span></div>
+          </div>
+        </div>
+        <div class="pill">
+          <div>
+            <div class="k">Tempo</div>
+            <div class="v" id="timer">05:00</div>
+          </div>
+          <div>
+            <div class="k">Placar</div>
+            <div class="v"><span class="goodTxt" id="hits">0</span> / <span class="badTxt" id="miss">0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Game -->
+    <section class="card" aria-label="Jogo principal">
+      <div class="cardHeader">
+        <h2>🎙️ Estúdio do Game Show <span class="badge" id="phaseBadge">Início</span></h2>
+        <div class="tiny" id="difficultyHint">Dica: use as ajudas quando quiser — elas permanecem até acabar.</div>
+      </div>
+      <div class="content">
+        <div class="scene" role="img" aria-label="Arte inspirada na Praia do Primeiro Cocal">
+          <div class="sun" aria-hidden="true"></div>
+          <div class="palm" aria-hidden="true">
+            <div class="leaf"></div><div class="leaf"></div><div class="leaf"></div>
+          </div>
+          <div class="palm" aria-hidden="true">
+            <div class="leaf"></div><div class="leaf"></div><div class="leaf"></div>
+          </div>
+          <div class="palm" aria-hidden="true">
+            <div class="leaf"></div><div class="leaf"></div><div class="leaf"></div>
+          </div>
+          <div class="titleStrip">🌊 Praia do Primeiro Cocal • São Pedro da Água Branca (MA)</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <p class="question" id="questionText">Clique em “Começar” para entrar na Aventura!</p>
+          <p class="context" id="contextText">
+            Você vai responder perguntas de múltipla escolha sobre porcentagem, sempre com situações do dia a dia do município:
+            comércio, agricultura, renda, eventos culturais e turismo local. Cada questão tem <b>5 minutos</b>.
+          </p>
+
+          <div class="hintBox" id="hintBox"></div>
+
+          <div class="options" id="options"></div>
+
+          <div class="feedback" id="feedback"></div>
+
+          <div class="controls">
+            <button class="btn" id="startBtn">Começar</button>
+            <button class="btn secondary" id="nextBtn" disabled>Próxima</button>
+            <button class="btn danger" id="resetBtn">Reiniciar</button>
+          </div>
+
+          <div class="footerNote" id="footerNote">
+            Regras rápidas: escolha uma alternativa. O cronômetro zera a cada questão. Se o tempo acabar, conta como erro.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Tools + Leaderboard -->
+    <aside class="card" aria-label="Ajudas e placar">
+      <div class="cardHeader">
+        <h2>🧰 Ajudas & Rodada Bônus <span class="badge">Ativas até esgotar</span></h2>
+      </div>
+      <div class="content">
+        <div class="tools" aria-label="Ferramentas do jogo">
+          <div class="toolRow">
+            <div class="toolCard">
+              <h3>💡 Dica do Apresentador <span class="count" id="hintCount">2</span></h3>
+              <p>Mostra uma pista conceitual (ex.: “% = por 100” ou passo a passo curto).</p>
+              <button class="btn secondary mini" id="hintBtn">Usar dica</button>
+            </div>
+
+            <div class="toolCard">
+              <h3>🧹 Eliminar 2 opções <span class="count" id="elimCount">2</span></h3>
+              <p>Remove duas alternativas erradas (fica mais fácil decidir).</p>
+              <button class="btn secondary mini" id="elimBtn">Eliminar</button>
+            </div>
+          </div>
+
+          <div class="toolRow">
+            <div class="toolCard">
+              <h3>⏳ +60s no relógio <span class="count" id="timeCount">2</span></h3>
+              <p>Adiciona 1 minuto ao tempo da questão atual.</p>
+              <button class="btn secondary mini" id="timeBtn">Adicionar tempo</button>
+            </div>
+
+            <div class="toolCard">
+              <h3>⭐ Rodada Bônus <span class="count" id="bonusCount">1</span></h3>
+              <p>Se você errar nesta questão, ela <b>não conta como erro</b>. (Uso único.)</p>
+              <button class="btn secondary mini" id="bonusBtn">Ativar bônus</button>
+            </div>
+          </div>
+
+          <div class="toolCard">
+            <h3>📌 Status das ferramentas</h3>
+            <p class="tiny" id="toolStatus">Use com estratégia: elas não reiniciam por rodada, só acabam quando você usar tudo.</p>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(47,90,134,.45); margin:16px 0;">
+
+        <div class="lb" aria-label="Placar de jogadores">
+          <div class="lbTop">
+            <input class="input" id="nameInput" maxlength="28" placeholder="Seu nome para o ranking (ex.: Ana, João, Prof. Maria)" />
+            <button class="btn" id="saveBtn" disabled>Salvar no ranking</button>
+            <button class="btn danger" id="clearLbBtn" type="button" title="Apaga todos os nomes salvos neste navegador">Limpar ranking</button>
+          </div>
+          <div class="tiny">Ao finalizar o jogo, você poderá salvar seu desempenho (acertos e erros). O ranking guarda até <b>40 nomes</b>.</div>
+
+          <table aria-label="Tabela de ranking" id="lbTable">
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th>Nome</th>
+                <th>Acertos</th>
+                <th>Erros</th>
+                <th class="score">Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="lbBody"></tbody>
+          </table>
+
+          <div class="footerNote">Dica pedagógica: proponha que a turma discuta as estratégias de cálculo após cada rodada.</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // ==========================
+    // Banco de Questões (9º ano) — Porcentagem contextualizada
+    // São Pedro da Água Branca (MA): comércio local, agricultura, eventos, renda e turismo
+    // ==========================
+    const QUESTIONS = [
+      {
+        round: 1,
+        title: "Promoção no comércio local",
+        q: "Uma mercearia no centro de São Pedro da Água Branca fez uma promoção de 15% de desconto em um kit de alimentos que custava R$ 80,00. Qual é o preço com desconto?",
+        context: "Situação comum em períodos de maior movimento na cidade, quando o comércio local faz ofertas para as famílias.",
+        options: [
+          "R$ 68,00",
+          "R$ 70,00",
+          "R$ 72,00",
+          "R$ 74,00"
+        ],
+        answer: 0,
+        hint: "Calcule 15% de 80 (15/100 × 80) e subtraia do valor inicial."
+      },
+      {
+        round: 1,
+        title: "Produção agrícola familiar",
+        q: "Uma comunidade rural colheu 250 kg de mandioca. Desse total, 40% foi destinado à venda e o resto para consumo e troca. Quantos kg foram vendidos?",
+        context: "A agricultura familiar é uma fonte importante de renda e sustento em diferentes povoados do município.",
+        options: [
+          "80 kg",
+          "90 kg",
+          "100 kg",
+          "120 kg"
+        ],
+        answer: 2,
+        hint: "40% significa 40 de cada 100. Então 40/100 de 250."
+      },
+      {
+        round: 1,
+        title: "Turismo e serviços na Praia do Primeiro Cocal",
+        q: "Em um fim de semana de férias, 160 visitantes passaram pela Praia do Primeiro Cocal. Se 25% alugaram cadeiras e guarda-sol, quantas pessoas utilizaram esse serviço?",
+        context: "No período de verão, o turismo local movimenta pequenos serviços e vendas na região da praia.",
+        options: [
+          "30 pessoas",
+          "35 pessoas",
+          "40 pessoas",
+          "45 pessoas"
+        ],
+        answer: 2,
+        hint: "25% é o mesmo que 1/4 do total."
+      },
+      {
+        round: 2,
+        title: "Transporte e economia",
+        q: "Uma associação de mototáxi calculou que, em média, 60% das corridas do dia acontecem entre 6h e 12h. Se em um dia foram feitas 90 corridas, quantas ocorreram nesse período?",
+        context: "O deslocamento para trabalho, feira e serviços costuma concentrar corridas pela manhã.",
+        options: [
+          "45 corridas",
+          "50 corridas",
+          "54 corridas",
+          "60 corridas"
+        ],
+        answer: 2,
+        hint: "60% de 90 é 0,60 × 90."
+      },
+      {
+        round: 2,
+        title: "Feira e desperdício",
+        q: "Na feira do município, um feirante trouxe 120 kg de frutas. Ao final do dia, 10% estragou e não pôde ser vendido. Quantos kg estragaram?",
+        context: "O controle de perdas na feira é essencial para a renda dos trabalhadores.",
+        options: [
+          "10 kg",
+          "12 kg",
+          "14 kg",
+          "18 kg"
+        ],
+        answer: 1,
+        hint: "10% é 10/100: ou seja, dividir por 10."
+      },
+      {
+        round: 2,
+        title: "Festa cultural e arrecadação",
+        q: "Em uma festa cultural da cidade, foram vendidas 500 rifas. Se 18% foram compradas por visitantes de municípios vizinhos, quantas rifas foram compradas por visitantes?",
+        context: "Eventos culturais fortalecem identidade local e movimentam arrecadações comunitárias.",
+        options: [
+          "70 rifas",
+          "80 rifas",
+          "90 rifas",
+          "100 rifas"
+        ],
+        answer: 2,
+        hint: "18% de 500: calcule 10% (50) + 8% (40)."
+      },
+      {
+        round: 3,
+        title: "Consumo de água (planejamento comunitário)",
+        q: "Um relatório escolar estimou que uma família reduziu em 12% o consumo mensal de água. Se antes consumia 25 m³, quanto passou a consumir após a redução?",
+        context: "Economia de recursos é tema de projetos ambientais na escola e na comunidade.",
+        options: [
+          "22 m³",
+          "22,5 m³",
+          "23 m³",
+          "24 m³"
+        ],
+        answer: 2,
+        hint: "12% de 25 é 3. Subtraia do consumo inicial."
+      },
+      {
+        round: 3,
+        title: "Orçamento de uma pequena produção",
+        q: "Uma artesã investiu R$ 300,00 em materiais. Ao vender seus produtos, obteve lucro de 25% sobre o investimento. Qual foi o lucro em reais?",
+        context: "Pequenos empreendimentos e artesanato aparecem em feiras e eventos do município.",
+        options: [
+          "R$ 60,00",
+          "R$ 65,00",
+          "R$ 70,00",
+          "R$ 75,00"
+        ],
+        answer: 3,
+        hint: "25% é 1/4: um quarto de 300."
+      },
+      {
+        round: 3,
+        title: "Bônus: porcentagem de aumento",
+        q: "Uma barraca na praia vendia 40 água de coco por dia. Em um feriado, as vendas aumentaram 30%. Quantas água de coco ela vendeu nesse dia?",
+        context: "Em feriados, o fluxo na Praia do Primeiro Cocal costuma aumentar e impactar as vendas.",
+        options: [
+          "50",
+          "52",
+          "54",
+          "56"
+        ],
+        answer: 2,
+        hint: "Aumento de 30%: calcule 30% de 40 e some ao 40."
+      }
+    ];
+
+    // ==========================
+    // Estado do Jogo
+    // ==========================
+    const state = {
+      started: false,
+      ended: false,
+      idx: 0,
+      hits: 0,
+      miss: 0,
+      secondsLeft: 300, // 5 minutes
+      timerId: null,
+      answered: false,
+
+      // Tools (persist across game until exhausted)
+      hintUses: 2,
+      elimUses: 2,
+      timeUses: 2,
+      bonusUses: 1,
+
+      // bonus active for current question only
+      bonusActive: false,
+
+      // leaderboard (max 40)
+      leaderboard: []
+    };
+
+    // ==========================
+    // Elements
+    // ==========================
+    const qTotalEl = document.getElementById("qTotal");
+    const qIndexEl = document.getElementById("qIndex");
+    const roundLabelEl = document.getElementById("roundLabel");
+    const timerEl = document.getElementById("timer");
+    const hitsEl = document.getElementById("hits");
+    const missEl = document.getElementById("miss");
+    const questionTextEl = document.getElementById("questionText");
+    const contextTextEl = document.getElementById("contextText");
+    const optionsEl = document.getElementById("options");
+    const feedbackEl = document.getElementById("feedback");
+    const hintBoxEl = document.getElementById("hintBox");
+    const phaseBadgeEl = document.getElementById("phaseBadge");
+    const difficultyHintEl = document.getElementById("difficultyHint");
+    const footerNoteEl = document.getElementById("footerNote");
+
+    const startBtn = document.getElementById("startBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const hintBtn = document.getElementById("hintBtn");
+    const elimBtn = document.getElementById("elimBtn");
+    const timeBtn = document.getElementById("timeBtn");
+    const bonusBtn = document.getElementById("bonusBtn");
+
+    const hintCountEl = document.getElementById("hintCount");
+    const elimCountEl = document.getElementById("elimCount");
+    const timeCountEl = document.getElementById("timeCount");
+    const bonusCountEl = document.getElementById("bonusCount");
+    const toolStatusEl = document.getElementById("toolStatus");
+
+    const nameInput = document.getElementById("nameInput");
+    const saveBtn = document.getElementById("saveBtn");
+    const clearLbBtn = document.getElementById("clearLbBtn");
+    const lbBody = document.getElementById("lbBody");
+
+    // ==========================
+    // Util
+    // ==========================
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+    function pad2(n){ return String(n).padStart(2, "0"); }
+    function fmtTime(totalSec){
+      totalSec = Math.max(0, totalSec);
+      const m = Math.floor(totalSec/60);
+      const s = totalSec % 60;
+      return `${pad2(m)}:${pad2(s)}`;
+    }
+    function currentQuestion(){ return QUESTIONS[state.idx]; }
+
+    function loadLeaderboard(){
+      try{
+        const raw = localStorage.getItem("apm_leaderboard");
+        if(raw){
+          const arr = JSON.parse(raw);
+          if(Array.isArray(arr)) state.leaderboard = arr.slice(0,40);
+        }
+      }catch(e){ /* ignore */ }
+    }
+    function saveLeaderboard(){
+      try{
+        localStorage.setItem("apm_leaderboard", JSON.stringify(state.leaderboard.slice(0,40)));
+      }catch(e){ /* ignore */ }
+    }
+
+    function clearLeaderboard(){
+      state.leaderboard = [];
+      try{ localStorage.removeItem("apm_leaderboard"); }catch(e){ /* ignore */ }
+      renderLeaderboard();
+    }
+
+    // ==========================
+    // Timer
+    // ==========================
+    function stopTimer(){
+      if(state.timerId){
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+    function startTimer(){
+      stopTimer();
+      state.timerId = setInterval(()=>{
+        if(!state.started || state.ended) return;
+        if(state.answered) return; // pause after answer
+        state.secondsLeft--;
+        renderTimer();
+        if(state.secondsLeft <= 0){
+          // time out counts as miss (unless bonus active)
+          handleTimeout();
+        }
+      }, 1000);
+    }
+    function resetTimer(){
+      state.secondsLeft = 300;
+      renderTimer();
+      state.answered = false;
+      state.bonusActive = false;
+      // hide hint box each question start
+      hintBoxEl.classList.remove("show");
+      hintBoxEl.textContent = "";
+      feedbackEl.className = "feedback";
+      feedbackEl.textContent = "";
+      feedbackEl.classList.remove("show");
+    }
+
+    function renderTimer(){
+      timerEl.textContent = fmtTime(state.secondsLeft);
+      // subtle urgency
+      if(state.secondsLeft <= 30){
+        timerEl.style.color = "var(--bad)";
+      }else if(state.secondsLeft <= 90){
+        timerEl.style.color = "var(--accent)";
+      }else{
+        timerEl.style.color = "rgba(233,242,255,.95)";
+      }
+    }
+
+    function handleTimeout(){
+      state.answered = true;
+      disableOptions(true);
+      stopTimer();
+      const q = currentQuestion();
+      if(state.bonusActive){
+        state.bonusActive = false;
+        showFeedback(false, `⏰ Tempo esgotado! A Rodada Bônus estava ativa — este erro <b>não</b> foi contabilizado. A resposta correta era: <b>${letter(q.answer)} — ${q.options[q.answer]}</b>.`);
+      }else{
+        state.miss++;
+        showFeedback(false, `⏰ Tempo esgotado! Isso conta como erro. A resposta correta era: <b>${letter(q.answer)} — ${q.options[q.answer]}</b>.`);
+      }
+      updateScoreUI();
+      nextBtn.disabled = false;
+      phaseBadgeEl.textContent = "Resposta encerrada";
+      allowSaveIfEnded();
+    }
+
+    // ==========================
+    // Rendering
+    // ==========================
+    function letter(i){ return ["A","B","C","D"][i] || "?"; }
+
+    function disableOptions(disabled){
+      const btns = optionsEl.querySelectorAll("button.optBtn");
+      btns.forEach(b => b.disabled = disabled);
+    }
+
+    function renderQuestion(){
+      const q = currentQuestion();
+      qTotalEl.textContent = QUESTIONS.length;
+      qIndexEl.textContent = state.idx + 1;
+      roundLabelEl.textContent = `Rodada ${q.round}`;
+      phaseBadgeEl.textContent = `Rodada ${q.round}`;
+      difficultyHintEl.textContent = q.round === 1
+        ? "Rodada 1: aquecimento — porcentagens diretas."
+        : q.round === 2
+          ? "Rodada 2: estratégia — decomposição (10% + 8%, etc.)."
+          : "Rodada 3: desafio — aumento/redução e interpretação.";
+
+      questionTextEl.textContent = q.q;
+      contextTextEl.textContent = q.context;
+
+      // options
+      optionsEl.innerHTML = "";
+      q.options.forEach((opt, i)=>{
+        const btn = document.createElement("button");
+        btn.className = "optBtn";
+        btn.type = "button";
+        btn.innerHTML = `
+          <div class="optKey">${letter(i)}</div>
+          <div class="optText">${opt}</div>
+        `;
+        btn.addEventListener("click", ()=> chooseOption(i));
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.disabled = true;
+      resetTimer();
+      startTimer();
+      renderTools();
+      footerNoteEl.innerHTML = `Cada questão vale 1 ponto de acerto. Tempo por questão: <b>5 minutos</b>.`;
+    }
+
+    function showFeedback(isGood, html){
+      feedbackEl.className = "feedback show " + (isGood ? "good" : "bad");
+      feedbackEl.innerHTML = html;
+    }
+
+    function updateScoreUI(){
+      hitsEl.textContent = state.hits;
+      missEl.textContent = state.miss;
+    }
+
+    function renderTools(){
+      hintCountEl.textContent = state.hintUses;
+      elimCountEl.textContent = state.elimUses;
+      timeCountEl.textContent = state.timeUses;
+      bonusCountEl.textContent = state.bonusUses;
+
+      hintBtn.disabled = !state.started || state.ended || state.hintUses <= 0 || state.answered;
+      elimBtn.disabled = !state.started || state.ended || state.elimUses <= 0 || state.answered;
+      timeBtn.disabled = !state.started || state.ended || state.timeUses <= 0 || state.answered;
+      bonusBtn.disabled = !state.started || state.ended || state.bonusUses <= 0 || state.answered || state.bonusActive;
+
+      toolStatusEl.innerHTML = `
+        Dica: <b>${state.hintUses}</b> • Eliminar: <b>${state.elimUses}</b> • +60s: <b>${state.timeUses}</b> • Bônus: <b>${state.bonusUses}</b>
+        ${state.bonusActive ? " • ⭐ <b>Bônus ATIVO</b> nesta questão" : ""}
+      `;
+    }
+
+    function renderLeaderboard(){
+      lbBody.innerHTML = "";
+      const arr = state.leaderboard.slice(0,40);
+      arr.forEach((row, i)=>{
+        const tr = document.createElement("tr");
+        const pts = row.hits - row.miss; // simple scoring
+        tr.innerHTML = `
+          <td class="rank">${String(i+1).padStart(2,"0")}</td>
+          <td>${escapeHtml(row.name)}</td>
+          <td class="goodTxt score">${row.hits}</td>
+          <td class="badTxt score">${row.miss}</td>
+          <td class="score">${pts}</td>
+        `;
+        lbBody.appendChild(tr);
+      });
+      // fill empty rows (visual stability)
+      for(let i=arr.length; i<Math.min(40, Math.max(10, arr.length+1)); i++){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="rank">${String(i+1).padStart(2,"0")}</td>
+          <td style="color:rgba(184,199,221,.55)">—</td>
+          <td class="goodTxt score">—</td>
+          <td class="badTxt score">—</td>
+          <td class="score">—</td>
+        `;
+        lbBody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ==========================
+    // Gameplay
+    // ==========================
+    function chooseOption(i){
+      if(state.answered || state.ended) return;
+      state.answered = true;
+      stopTimer();
+      disableOptions(true);
+
+      const q = currentQuestion();
+      const correct = (i === q.answer);
+
+      // Mark selected + correct visually by adjusting button borders
+      const btns = optionsEl.querySelectorAll("button.optBtn");
+      btns.forEach((b, idx)=>{
+        if(idx === q.answer) b.style.borderColor = "rgba(124,255,122,.65)";
+        if(idx === i && !correct) b.style.borderColor = "rgba(255,107,107,.65)";
+      });
+
+      if(correct){
+        state.hits++;
+        showFeedback(true, `✅ Correto! <b>${letter(q.answer)} — ${q.options[q.answer]}</b>.`);
+      }else{
+        if(state.bonusActive){
+          state.bonusActive = false;
+          showFeedback(false, `❌ Quase! A Rodada Bônus estava ativa — este erro <b>não</b> foi contabilizado. A correta era: <b>${letter(q.answer)} — ${q.options[q.answer]}</b>.`);
+        }else{
+          state.miss++;
+          showFeedback(false, `❌ Incorreto. A correta era: <b>${letter(q.answer)} — ${q.options[q.answer]}</b>.`);
+        }
+      }
+
+      updateScoreUI();
+      nextBtn.disabled = false;
+      phaseBadgeEl.textContent = "Resposta registrada";
+      renderTools();
+      allowSaveIfEnded();
+    }
+
+    function nextQuestion(){
+      if(!state.started) return;
+      if(state.idx < QUESTIONS.length - 1){
+        state.idx++;
+        renderQuestion();
+      }else{
+        endGame();
+      }
+    }
+
+    function startGame(){
+      state.started = true;
+      state.ended = false;
+      state.idx = 0;
+      state.hits = 0;
+      state.miss = 0;
+      state.secondsLeft = 300;
+      state.answered = false;
+
+      // tools reset only when restarting
+      state.hintUses = 2;
+      state.elimUses = 2;
+      state.timeUses = 2;
+      state.bonusUses = 1;
+      state.bonusActive = false;
+
+      updateScoreUI();
+      phaseBadgeEl.textContent = "Rodada 1";
+      startBtn.disabled = true;
+      renderQuestion();
+      renderTools();
+      footerNoteEl.innerHTML = "Boa sorte! Use as ajudas com sabedoria.";
+      saveBtn.disabled = true;
+      nameInput.value = "";
+    }
+
+    function endGame(){
+      state.ended = true;
+      stopTimer();
+      disableOptions(true);
+      questionTextEl.textContent = "🏁 Fim de jogo! Você concluiu a Aventura pela Matemática.";
+      contextTextEl.textContent = "Digite seu nome ao lado e clique em “Salvar no ranking” para registrar seu desempenho (acertos e erros).";
+      optionsEl.innerHTML = "";
+      feedbackEl.className = "feedback show good";
+      feedbackEl.innerHTML = `Resultado final: <b class="goodTxt">${state.hits} acertos</b> e <b class="badTxt">${state.miss} erros</b>.`;
+      nextBtn.disabled = true;
+      phaseBadgeEl.textContent = "Finalizado";
+      startBtn.disabled = false;
+      startBtn.textContent = "Jogar novamente";
+      renderTools();
+      allowSaveIfEnded();
+    }
+
+    function resetAll(){
+      stopTimer();
+      state.started = false;
+      state.ended = false;
+      state.idx = 0;
+      state.hits = 0;
+      state.miss = 0;
+      state.secondsLeft = 300;
+      state.answered = false;
+      state.bonusActive = false;
+
+      state.hintUses = 2;
+      state.elimUses = 2;
+      state.timeUses = 2;
+      state.bonusUses = 1;
+
+      phaseBadgeEl.textContent = "Início";
+      startBtn.disabled = false;
+      startBtn.textContent = "Começar";
+      nextBtn.disabled = true;
+
+      questionTextEl.textContent = "Clique em “Começar” para entrar na Aventura!";
+      contextTextEl.textContent = "Você vai responder perguntas de múltipla escolha sobre porcentagem, sempre com situações do dia a dia do município: comércio, agricultura, renda, eventos culturais e turismo local. Cada questão tem 5 minutos.";
+      optionsEl.innerHTML = "";
+      feedbackEl.className = "feedback";
+      feedbackEl.textContent = "";
+      feedbackEl.classList.remove("show");
+      hintBoxEl.classList.remove("show");
+      hintBoxEl.textContent = "";
+      nameInput.value = "";
+      saveBtn.disabled = true;
+
+      updateScoreUI();
+      renderTimer();
+      renderTools();
+      footerNoteEl.innerHTML = "Regras rápidas: escolha uma alternativa. O cronômetro zera a cada questão. Se o tempo acabar, conta como erro.";
+    }
+
+    function allowSaveIfEnded(){
+      saveBtn.disabled = !state.ended || nameInput.value.trim().length === 0;
+    }
+
+    // ==========================
+    // Tools actions
+    // ==========================
+    function useHint(){
+      if(state.hintUses <= 0 || !state.started || state.ended || state.answered) return;
+      state.hintUses--;
+      const q = currentQuestion();
+      hintBoxEl.textContent = `💡 Dica: ${q.hint}`;
+      hintBoxEl.classList.add("show");
+      renderTools();
+    }
+
+    function useEliminate(){
+      if(state.elimUses <= 0 || !state.started || state.ended || state.answered) return;
+      state.elimUses--;
+      const q = currentQuestion();
+      const wrong = [0,1,2,3].filter(i => i !== q.answer);
+
+      // pick two wrong to remove
+      shuffle(wrong);
+      const toRemove = wrong.slice(0,2);
+      const btns = optionsEl.querySelectorAll("button.optBtn");
+      toRemove.forEach(i=>{
+        const b = btns[i];
+        if(b){
+          b.disabled = true;
+          b.style.opacity = ".35";
+          b.style.filter = "grayscale(.35)";
+          b.style.textDecoration = "line-through";
+        }
+      });
+      renderTools();
+      toolStatusEl.innerHTML += " • 🧹 <b>2 opções eliminadas</b>";
+    }
+
+    function useAddTime(){
+      if(state.timeUses <= 0 || !state.started || state.ended || state.answered) return;
+      state.timeUses--;
+      state.secondsLeft = clamp(state.secondsLeft + 60, 0, 900);
+      renderTimer();
+      renderTools();
+      toolStatusEl.innerHTML += " • ⏳ <b>+60s aplicado</b>";
+    }
+
+    function useBonus(){
+      if(state.bonusUses <= 0 || !state.started || state.ended || state.answered) return;
+      state.bonusUses--;
+      state.bonusActive = true;
+      renderTools();
+      hintBoxEl.innerHTML = "⭐ Rodada Bônus <b>ATIVA</b>: se você errar esta questão, o erro não será contabilizado.";
+      hintBoxEl.classList.add("show");
+    }
+
+    function shuffle(arr){
+      for(let i=arr.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // ==========================
+    // Leaderboard
+    // ==========================
+    function addToLeaderboard(name){
+      const item = { name: name.trim(), hits: state.hits, miss: state.miss, ts: Date.now() };
+      state.leaderboard.unshift(item);
+
+      // Sort by points desc, then hits desc, then fewer misses, then recent
+      state.leaderboard.sort((a,b)=>{
+        const pa = a.hits - a.miss;
+        const pb = b.hits - b.miss;
+        if(pb !== pa) return pb - pa;
+        if(b.hits !== a.hits) return b.hits - a.hits;
+        if(a.miss !== b.miss) return a.miss - b.miss;
+        return b.ts - a.ts;
+      });
+
+      state.leaderboard = state.leaderboard.slice(0,40);
+      saveLeaderboard();
+      renderLeaderboard();
+    }
+
+    // ==========================
+    // Events
+    // ==========================
+    startBtn.addEventListener("click", ()=>{
+      startBtn.textContent = "Jogar novamente";
+      startBtn.disabled = true;
+      startGame();
+    });
+
+    nextBtn.addEventListener("click", ()=>{
+      nextQuestion();
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      resetAll();
+    });
+
+    hintBtn.addEventListener("click", useHint);
+    elimBtn.addEventListener("click", useEliminate);
+    timeBtn.addEventListener("click", useAddTime);
+    bonusBtn.addEventListener("click", useBonus);
+
+    nameInput.addEventListener("input", ()=>{
+      allowSaveIfEnded();
+    });
+
+    saveBtn.addEventListener("click", ()=>{
+      if(!state.ended) return;
+      const name = nameInput.value.trim();
+      if(!name) return;
+      addToLeaderboard(name);
+      nameInput.value = "";
+      saveBtn.disabled = true;
+    });
+
+    clearLbBtn.addEventListener("click", ()=>{
+      const ok = confirm("Deseja apagar TODOS os nomes do ranking salvos neste navegador?");
+      if(!ok) return;
+      clearLeaderboard();
+    });
+
+    // Keyboard shortcuts A/B/C/D
+    document.addEventListener("keydown", (e)=>{
+      if(!state.started || state.ended) return;
+      if(state.answered) return;
+      const map = { "a":0, "b":1, "c":2, "d":3 };
+      const k = e.key.toLowerCase();
+      if(Object.prototype.hasOwnProperty.call(map, k)){
+        const btns = optionsEl.querySelectorAll("button.optBtn");
+        const i = map[k];
+        if(btns[i] && !btns[i].disabled) btns[i].click();
+      }
+    });
+
+    // Initial setup
+    (function init(){
+      qTotalEl.textContent = QUESTIONS.length;
+      renderTimer();
+      updateScoreUI();
+      loadLeaderboard();
+      renderLeaderboard();
+      renderTools();
+    })();
+  </script>
+</body>
+</html>
